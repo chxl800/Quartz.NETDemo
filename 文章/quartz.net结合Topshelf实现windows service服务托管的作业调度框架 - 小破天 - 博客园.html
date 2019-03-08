@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<!-- saved from url=(0055)http://www.cnblogs.com/xiaopotian/articles/5437364.html -->
+<html lang="zh-cn"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园</title>
+<link type="text/css" rel="stylesheet" href="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/blog-common.css">
+<link id="MainCss" type="text/css" rel="stylesheet" href="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/bundle-AnotherEon001.css">
+<link id="mobile-style" media="only screen and (max-width: 768px)" type="text/css" rel="stylesheet" href="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/bundle-AnotherEon001-mobile.css">
+<link title="RSS" type="application/rss+xml" rel="alternate" href="http://www.cnblogs.com/xiaopotian/rss">
+<link title="RSD" type="application/rsd+xml" rel="EditURI" href="http://www.cnblogs.com/xiaopotian/rsd.xml">
+<link type="application/wlwmanifest+xml" rel="wlwmanifest" href="http://www.cnblogs.com/xiaopotian/wlwmanifest.xml">
+<script async="" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/analytics.js"></script><script type="text/javascript" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/encoder.js"></script><script src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/jquery.js" type="text/javascript"></script>  
+<script type="text/javascript">var currentBlogApp = 'xiaopotian', cb_enable_mathjax=false;var isLogined=false;</script>
+<script src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/blog-common.js" type="text/javascript"></script>
+</head>
+<body>
+<a name="top"></a>
+
+<div id="wrapper">
+<div id="header">
+
+<div id="top">
+<h1><a id="Header1_HeaderTitle" class="headermaintitle" href="http://www.cnblogs.com/xiaopotian/">小破天</a></h1>
+<div id="subtitle"></div>
+</div>
+<div id="sub"><div id="blog_stats">
+<div class="BlogStats">随笔 - 0, 文章 - 20, 评论 - 0, 引用 - 0</div>
+</div></div>
+
+
+
+</div>
+<div id="main_container">
+<div id="main_content">
+<div id="content">
+	
+<div id="post_detail">
+	<div class="post">
+		<h2>
+			<a id="cb_post_title_url" href="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园.html">quartz.net结合Topshelf实现windows service服务托管的作业调度框架</a>
+		</h2>
+		<div class="postbody">
+		<div id="cnblogs_post_body"><p>topshelf可以很简单方便的实现windows service服务，详见我的一篇博客的介绍</p>
+<p>http://www.cnblogs.com/xiaopotian/articles/5428361.html</p>
+<p>Quartz.NET是一个开源的作业调度框架，非常适合在平时的工作中，定时轮询数据库同步，定时邮件通知，定时处理数据等。&nbsp;Quartz.NET允许开发人员根据时间间隔（或天）来调度作业。它实现了作业和触发器的多对多关系，还能把多个作业与不同的触发器关联。整合了 Quartz.NET的应用程序可以重用来自不同事件的作业，还可以为一个事件组合多个作业。Quartz.NET是OpenSymphony的开源项目。Quartz.Net&nbsp;是Quartz的C#移植版本。</p>
+<p>它一些很好的特性：</p>
+<p>1：支持集群，作业分组，作业远程管理。&nbsp;</p>
+<p>2：自定义精细的时间触发器，使用简单，作业和触发分离。</p>
+<p>3：数据库支持，可以寄宿Windows服务，WebSite，winform等。</p>
+<p>下面是官网的详细介绍http://www.quartz-scheduler.net/documentation/index.html</p>
+<p>结合topshelf、log4net与官网案例写了一个小的demo</p>
+<p>第一步，实现IJob</p>
+<div class="cnblogs_code" onclick="cnblogs_code_show(&#39;8f989173-cc3f-44c4-b706-3c145ac170d9&#39;)"><img id="code_img_closed_8f989173-cc3f-44c4-b706-3c145ac170d9" class="code_img_closed" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ContractedBlock.gif" alt=""><img id="code_img_opened_8f989173-cc3f-44c4-b706-3c145ac170d9" class="code_img_opened" style="display: none;" onclick="cnblogs_code_hide(&#39;8f989173-cc3f-44c4-b706-3c145ac170d9&#39;,event)" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ExpandedBlockStart.gif" alt="">
+<div id="cnblogs_code_open_8f989173-cc3f-44c4-b706-3c145ac170d9" class="cnblogs_code_hide">
+<pre><span style="color: #008080;"> 1</span> <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;summary&gt;</span>
+<span style="color: #008080;"> 2</span>     <span style="color: #808080;">///</span><span style="color: #008000;"> A sample job that just prints info on console for demostration purposes.
+</span><span style="color: #008080;"> 3</span>     <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/summary&gt;</span>
+<span style="color: #008080;"> 4</span>     <span style="color: #0000ff;">public</span> <span style="color: #0000ff;">class</span><span style="color: #000000;"> SampleJob : IJob
+</span><span style="color: #008080;"> 5</span> <span style="color: #000000;">    {
+</span><span style="color: #008080;"> 6</span>         <span style="color: #008000;">//</span><span style="color: #008000;">private static readonly ILog logger = LogManager.GetLogger(typeof(SampleJob));</span>
+<span style="color: #008080;"> 7</span> 
+<span style="color: #008080;"> 8</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;summary&gt;</span>
+<span style="color: #008080;"> 9</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> Called by the </span><span style="color: #808080;">&lt;see cref="IScheduler" /&gt;</span><span style="color: #008000;"> when a </span><span style="color: #808080;">&lt;see cref="ITrigger" /&gt;</span>
+<span style="color: #008080;">10</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> fires that is associated with the </span><span style="color: #808080;">&lt;see cref="IJob" /&gt;</span><span style="color: #008000;">.
+</span><span style="color: #008080;">11</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/summary&gt;</span>
+<span style="color: #008080;">12</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;remarks&gt;</span>
+<span style="color: #008080;">13</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> The implementation may wish to set a  result object on the 
+</span><span style="color: #008080;">14</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> JobExecutionContext before this method exits.  The result itself
+</span><span style="color: #008080;">15</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> is meaningless to Quartz, but may be informative to 
+</span><span style="color: #008080;">16</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;see cref="IJobListener" /&gt;</span><span style="color: #008000;">s or 
+</span><span style="color: #008080;">17</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;see cref="ITriggerListener" /&gt;</span><span style="color: #008000;">s that are watching the job's 
+</span><span style="color: #008080;">18</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> execution.
+</span><span style="color: #008080;">19</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/remarks&gt;</span>
+<span style="color: #008080;">20</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;param name="context"&gt;</span><span style="color: #008000;">The execution context.</span><span style="color: #808080;">&lt;/param&gt;</span>
+<span style="color: #008080;">21</span>         <span style="color: #0000ff;">public</span> <span style="color: #0000ff;">void</span><span style="color: #000000;"> Execute(IJobExecutionContext context)
+</span><span style="color: #008080;">22</span> <span style="color: #000000;">        {
+</span><span style="color: #008080;">23</span>             LogHelper.Info(<span style="color: #800000;">"</span><span style="color: #800000;">SampleJob running...</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">24</span>             <span style="color: #008000;">//</span><span style="color: #008000;">Thread.Sleep(TimeSpan.FromSeconds(5));</span>
+<span style="color: #008080;">25</span>             Console.WriteLine(<span style="color: #800000;">"</span><span style="color: #800000;">111111111111111111111</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">26</span>             LogHelper.Info(<span style="color: #800000;">"</span><span style="color: #800000;">SampleJob run finished.</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">27</span> <span style="color: #000000;">        }
+</span><span style="color: #008080;">28</span>     }</pre>
+</div>
+<span class="cnblogs_code_collapse">View Code</span></div>
+<p>第二部，配置quartz.config、quartz_jobs.xml</p>
+<div class="cnblogs_code" onclick="cnblogs_code_show(&#39;85997bba-ab31-4cfe-87dc-8d727c368161&#39;)"><img id="code_img_closed_85997bba-ab31-4cfe-87dc-8d727c368161" class="code_img_closed" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ContractedBlock.gif" alt="" style="display: none;"><img id="code_img_opened_85997bba-ab31-4cfe-87dc-8d727c368161" class="code_img_opened" style="" onclick="cnblogs_code_hide(&#39;85997bba-ab31-4cfe-87dc-8d727c368161&#39;,event)" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ExpandedBlockStart.gif" alt="">
+<div id="cnblogs_code_open_85997bba-ab31-4cfe-87dc-8d727c368161" class="cnblogs_code_hide" style="display: block;"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre><span style="color: #008080;"> 1</span> # You can configure your scheduler <span style="color: #0000ff;">in</span><span style="color: #000000;"> either quartz configuration section
+</span><span style="color: #008080;"> 2</span> # or <span style="color: #0000ff;">in</span><span style="color: #000000;"> quartz properties file
+</span><span style="color: #008080;"> 3</span> <span style="color: #000000;"># Configuration section has precedence
+</span><span style="color: #008080;"> 4</span> 
+<span style="color: #008080;"> 5</span> quartz.scheduler.instanceName =<span style="color: #000000;"> QuartzDemo
+</span><span style="color: #008080;"> 6</span> 
+<span style="color: #008080;"> 7</span> <span style="color: #000000;"># configure thread pool info
+</span><span style="color: #008080;"> 8</span> quartz.threadPool.type =<span style="color: #000000;"> Quartz.Simpl.SimpleThreadPool, Quartz
+</span><span style="color: #008080;"> 9</span> quartz.threadPool.threadCount = <span style="color: #800080;">10</span>
+<span style="color: #008080;">10</span> quartz.threadPool.threadPriority =<span style="color: #000000;"> Normal
+</span><span style="color: #008080;">11</span> 
+<span style="color: #008080;">12</span> <span style="color: #000000;"># job initialization plugin handles our xml reading, without it defaults are used
+</span><span style="color: #008080;">13</span> quartz.plugin.xml.type =<span style="color: #000000;"> Quartz.Plugin.Xml.XMLSchedulingDataProcessorPlugin, Quartz
+</span><span style="color: #008080;">14</span> quartz.plugin.xml.fileNames = ~/<span style="color: #000000;">quartz_jobs.xml
+</span><span style="color: #008080;">15</span> 
+<span style="color: #008080;">16</span> # export <span style="color: #0000ff;">this</span><span style="color: #000000;"> server to remoting context
+</span><span style="color: #008080;">17</span> quartz.scheduler.exporter.type =<span style="color: #000000;"> Quartz.Simpl.RemotingSchedulerExporter, Quartz
+</span><span style="color: #008080;">18</span> quartz.scheduler.exporter.port = <span style="color: #800080;">555</span>
+<span style="color: #008080;">19</span> quartz.scheduler.exporter.bindName =<span style="color: #000000;"> QuartzScheduler
+</span><span style="color: #008080;">20</span> quartz.scheduler.exporter.channelType =<span style="color: #000000;"> tcp
+</span><span style="color: #008080;">21</span> quartz.scheduler.exporter.channelName = httpQuartz</pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<span class="cnblogs_code_collapse" style="display: none;">View Code</span></div>
+<div class="cnblogs_code" onclick="cnblogs_code_show(&#39;e041fad5-1eae-4ae9-b343-374f971bdba5&#39;)"><img id="code_img_closed_e041fad5-1eae-4ae9-b343-374f971bdba5" class="code_img_closed" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ContractedBlock.gif" alt="" style="display: none;"><img id="code_img_opened_e041fad5-1eae-4ae9-b343-374f971bdba5" class="code_img_opened" style="" onclick="cnblogs_code_hide(&#39;e041fad5-1eae-4ae9-b343-374f971bdba5&#39;,event)" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ExpandedBlockStart.gif" alt="">
+<div id="cnblogs_code_open_e041fad5-1eae-4ae9-b343-374f971bdba5" class="cnblogs_code_hide" style="display: block;"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre><span style="color: #008080;"> 1</span> &lt;?xml version=<span style="color: #800000;">"</span><span style="color: #800000;">1.0</span><span style="color: #800000;">"</span> encoding=<span style="color: #800000;">"</span><span style="color: #800000;">UTF-8</span><span style="color: #800000;">"</span>?&gt;
+<span style="color: #008080;"> 2</span> 
+<span style="color: #008080;"> 3</span> &lt;!-- This file contains job definitions <span style="color: #0000ff;">in</span> schema version <span style="color: #800080;">2.0</span> format --&gt;
+<span style="color: #008080;"> 4</span> 
+<span style="color: #008080;"> 5</span> &lt;job-scheduling-data xmlns=<span style="color: #800000;">"</span><span style="color: #800000;">http://quartznet.sourceforge.net/JobSchedulingData</span><span style="color: #800000;">"</span> xmlns:xsi=<span style="color: #800000;">"</span><span style="color: #800000;">http://www.w3.org/2001/XMLSchema-instance</span><span style="color: #800000;">"</span> version=<span style="color: #800000;">"</span><span style="color: #800000;">2.0</span><span style="color: #800000;">"</span>&gt;
+<span style="color: #008080;"> 6</span> 
+<span style="color: #008080;"> 7</span>   &lt;processing-directives&gt;
+<span style="color: #008080;"> 8</span>     &lt;overwrite-existing-data&gt;<span style="color: #0000ff;">true</span>&lt;/overwrite-existing-data&gt;
+<span style="color: #008080;"> 9</span>   &lt;/processing-directives&gt;
+<span style="color: #008080;">10</span> 
+<span style="color: #008080;">11</span>   &lt;schedule&gt;
+<span style="color: #008080;">12</span>     &lt;!--用来定义每个具体的任务的，多个任务请创建多个job节点即可--&gt;
+<span style="color: #008080;">13</span>     &lt;job&gt;
+<span style="color: #008080;">14</span>       &lt;!--name(必填) 任务名称，同一个group中多个job的name不能相同，若未设置group则所有未设置group的job为同一个分组，如:&lt;name&gt;sampleJob&lt;/name&gt;--&gt;
+<span style="color: #008080;">15</span>       &lt;name&gt;SampleJob&lt;/name&gt;
+<span style="color: #008080;">16</span>       &lt;!--group(选填) 任务所属分组，用于标识任务所属分组，如:&lt;group&gt;sampleGroup&lt;/group&gt;--&gt;
+<span style="color: #008080;">17</span>       &lt;group&gt;SampleGroup&lt;/group&gt;
+<span style="color: #008080;">18</span>       &lt;!--description(选填) 任务描述，用于描述任务具体内容，如:&lt;description&gt;Sample job <span style="color: #0000ff;">for</span> Quartz Server&lt;/description&gt;--&gt;
+<span style="color: #008080;">19</span>       &lt;description&gt;SampleJob测试&lt;/description&gt;
+<span style="color: #008080;">20</span>       &lt;!--job-type(必填) 任务类型，任务的具体类型及所属程序集，格式：实现了IJob接口的包含完整命名空间的类名,程序集名称，如:&lt;job-type&gt;Quartz.Server.SampleJob, Quartz.Server&lt;/job-type&gt;--&gt;
+<span style="color: #008080;">21</span>       &lt;job-type&gt;QuartzDemo.SampleJob,QuartzDemo&lt;/job-type&gt;
+<span style="color: #008080;">22</span>       &lt;durable&gt;<span style="color: #0000ff;">true</span>&lt;/durable&gt;
+<span style="color: #008080;">23</span>       &lt;recover&gt;<span style="color: #0000ff;">false</span>&lt;/recover&gt;
+<span style="color: #008080;">24</span>     &lt;/job&gt;
+<span style="color: #008080;">25</span>     
+<span style="color: #008080;">26</span>     &lt;!--用于定义使用何种方式出发任务(job)，同一个job可以定义多个trigger ，多个trigger 各自独立的执行调度，每个trigger 中必须且只能定义一种触发器类型(calendar-interval、simple、cron)--&gt;
+<span style="color: #008080;">27</span>     &lt;trigger&gt;
+<span style="color: #008080;">28</span>       &lt;!--cron复杂任务触发器,使用cron表达式定制任务调度（强烈推荐)--&gt;
+<span style="color: #008080;">29</span>       &lt;cron&gt;
+<span style="color: #008080;">30</span>         &lt;!--name(必填) 触发器名称，同一个分组中的名称必须不同--&gt;
+<span style="color: #008080;">31</span>         &lt;name&gt;TestJobTrigger&lt;/name&gt;
+<span style="color: #008080;">32</span>         &lt;!--group(选填) 触发器组d--&gt;
+<span style="color: #008080;">33</span>         &lt;group&gt;Test&lt;/group&gt;
+<span style="color: #008080;">34</span>         &lt;!--escription(选填) 触发器描述--&gt;
+<span style="color: #008080;">35</span>         &lt;description&gt;TestJobTriggerDescription&lt;/description&gt;
+<span style="color: #008080;">36</span>         &lt;!--job-name(必填) 要调度的任务名称，该job-name必须和对应job节点中的name完全相同--&gt;
+<span style="color: #008080;">37</span>         &lt;job-name&gt;SampleJob&lt;/job-name&gt;
+<span style="color: #008080;">38</span>         &lt;!--job-group(选填) 调度任务(job)所属分组，该值必须和job中的group完全相同--&gt;
+<span style="color: #008080;">39</span>         &lt;job-group&gt;SampleGroup&lt;/job-group&gt;
+<span style="color: #008080;">40</span>         &lt;!--start-time(选填) 任务开始执行时间utc时间，北京时间需要+<span style="color: #800080;">08</span>:<span style="color: #800080;">00</span>，如：&lt;start-time&gt;<span style="color: #800080;">2012</span>-<span style="color: #800080;">04</span>-01T08:<span style="color: #800080;">00</span>:<span style="color: #800080;">00</span>+<span style="color: #800080;">08</span>:<span style="color: #800080;">00</span>&lt;/start-time&gt;表示北京时间2012年4月1日上午8:00开始执行，注意服务启动或重启时都会检测此属性，若没有设置此属性，服务会根据cron-expression的设置执行任务调度；若start-time设置的时间比当前时间较早，则服务启动后会忽略掉cron-expression设置，立即执行一次调度，之后再根据cron-expression执行任务调度；若设置的时间比当前时间晚，则服务会在到达设置时间相同后才会应用cron-expression，根据规则执行任务调度，一般若无特殊需要请不要设置此属性--&gt;
+<span style="color: #008080;">41</span>         &lt;start-time&gt;<span style="color: #800080;">2015</span>-<span style="color: #800080;">01</span>-22T00:<span style="color: #800080;">00</span>:<span style="color: #800080;">00</span>+<span style="color: #800080;">08</span>:<span style="color: #800080;">00</span>&lt;/start-time&gt;
+<span style="color: #008080;">42</span>         &lt;!--cron-expression(必填) cron表达式，如:&lt;cron-expression&gt;<span style="color: #800080;">0</span>/<span style="color: #800080;">10</span> * * * * ?&lt;/cron-expression&gt;每10秒执行一次--&gt;
+<span style="color: #008080;">43</span>         &lt;cron-expression&gt;<span style="color: #800080;">0</span>/<span style="color: #800080;">3</span> * * * * ?&lt;/cron-expression&gt;
+<span style="color: #008080;">44</span>       &lt;/cron&gt;
+<span style="color: #008080;">45</span>     &lt;/trigger&gt;
+<span style="color: #008080;">46</span> 
+<span style="color: #008080;">47</span>   &lt;/schedule&gt;
+<span style="color: #008080;">48</span> &lt;/job-scheduling-data&gt;</pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<span class="cnblogs_code_collapse" style="display: none;">View Code</span></div>
+<p>log4net的配置文件没有贴出，有想看的朋友可以去源代码里面查找</p>
+<p>第三部，结合topshelf调度任务</p>
+<div class="cnblogs_code" onclick="cnblogs_code_show(&#39;8da416f6-2b7b-470a-a3ef-7a838b330342&#39;)"><img id="code_img_closed_8da416f6-2b7b-470a-a3ef-7a838b330342" class="code_img_closed" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ContractedBlock.gif" alt="" style="display: none;"><img id="code_img_opened_8da416f6-2b7b-470a-a3ef-7a838b330342" class="code_img_opened" style="" onclick="cnblogs_code_hide(&#39;8da416f6-2b7b-470a-a3ef-7a838b330342&#39;,event)" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ExpandedBlockStart.gif" alt="">
+<div id="cnblogs_code_open_8da416f6-2b7b-470a-a3ef-7a838b330342" class="cnblogs_code_hide" style="display: block;"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre><span style="color: #008080;"> 1</span> <span style="color: #0000ff;">public</span> <span style="color: #0000ff;">class</span><span style="color: #000000;"> QuartzServer
+</span><span style="color: #008080;"> 2</span> <span style="color: #000000;">    {
+</span><span style="color: #008080;"> 3</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;summary&gt;</span>
+<span style="color: #008080;"> 4</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> 作业调度器
+</span><span style="color: #008080;"> 5</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/summary&gt;</span>
+<span style="color: #008080;"> 6</span>         <span style="color: #0000ff;">private</span> <span style="color: #0000ff;">readonly</span><span style="color: #000000;"> IScheduler scheduler;
+</span><span style="color: #008080;"> 7</span> 
+<span style="color: #008080;"> 8</span>         <span style="color: #0000ff;">public</span><span style="color: #000000;"> QuartzServer()
+</span><span style="color: #008080;"> 9</span> <span style="color: #000000;">        {
+</span><span style="color: #008080;">10</span>             scheduler =<span style="color: #000000;"> StdSchedulerFactory.GetDefaultScheduler();
+</span><span style="color: #008080;">11</span> <span style="color: #000000;">        }
+</span><span style="color: #008080;">12</span> 
+<span style="color: #008080;">13</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;summary&gt;</span>
+<span style="color: #008080;">14</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> 服务启动
+</span><span style="color: #008080;">15</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/summary&gt;</span>
+<span style="color: #008080;">16</span>         <span style="color: #0000ff;">public</span> <span style="color: #0000ff;">void</span><span style="color: #000000;"> Start()
+</span><span style="color: #008080;">17</span> <span style="color: #000000;">        {
+</span><span style="color: #008080;">18</span>             LogHelper.Info(<span style="color: #800000;">"</span><span style="color: #800000;">Start...</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">19</span> <span style="color: #000000;">            scheduler.Start();
+</span><span style="color: #008080;">20</span> <span style="color: #000000;">        }
+</span><span style="color: #008080;">21</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;summary&gt;</span>
+<span style="color: #008080;">22</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> 服务停止
+</span><span style="color: #008080;">23</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/summary&gt;</span>
+<span style="color: #008080;">24</span>         <span style="color: #0000ff;">public</span> <span style="color: #0000ff;">void</span><span style="color: #000000;"> Stop()
+</span><span style="color: #008080;">25</span> <span style="color: #000000;">        {
+</span><span style="color: #008080;">26</span>             LogHelper.Info(<span style="color: #800000;">"</span><span style="color: #800000;">Stop...</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">27</span>             scheduler.Shutdown(<span style="color: #0000ff;">false</span><span style="color: #000000;">);
+</span><span style="color: #008080;">28</span> <span style="color: #000000;">        }
+</span><span style="color: #008080;">29</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;summary&gt;</span>
+<span style="color: #008080;">30</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> 继续服务
+</span><span style="color: #008080;">31</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/summary&gt;</span>
+<span style="color: #008080;">32</span>         <span style="color: #0000ff;">public</span> <span style="color: #0000ff;">void</span><span style="color: #000000;"> Continue()
+</span><span style="color: #008080;">33</span> <span style="color: #000000;">        {
+</span><span style="color: #008080;">34</span>             LogHelper.Info(<span style="color: #800000;">"</span><span style="color: #800000;">Continue...</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">35</span> <span style="color: #000000;">            scheduler.ResumeAll();
+</span><span style="color: #008080;">36</span> <span style="color: #000000;">        }
+</span><span style="color: #008080;">37</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;summary&gt;</span>
+<span style="color: #008080;">38</span>         <span style="color: #808080;">///</span><span style="color: #008000;"> 服务暂停
+</span><span style="color: #008080;">39</span>         <span style="color: #808080;">///</span> <span style="color: #808080;">&lt;/summary&gt;</span>
+<span style="color: #008080;">40</span>         <span style="color: #0000ff;">public</span> <span style="color: #0000ff;">void</span><span style="color: #000000;"> Pause()
+</span><span style="color: #008080;">41</span> <span style="color: #000000;">        {
+</span><span style="color: #008080;">42</span>             LogHelper.Info(<span style="color: #800000;">"</span><span style="color: #800000;">Pause...</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">43</span> <span style="color: #000000;">            scheduler.PauseAll();
+</span><span style="color: #008080;">44</span> <span style="color: #000000;">        }
+</span><span style="color: #008080;">45</span>     }</pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<span class="cnblogs_code_collapse" style="display: none;">View Code</span></div>
+<p>第四部，配置windows service服务，采用的通用模式</p>
+<div class="cnblogs_code" onclick="cnblogs_code_show(&#39;9a50ae25-f430-4f70-ba97-1daa6d800a38&#39;)"><img id="code_img_closed_9a50ae25-f430-4f70-ba97-1daa6d800a38" class="code_img_closed" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ContractedBlock.gif" alt="" style="display: none;"><img id="code_img_opened_9a50ae25-f430-4f70-ba97-1daa6d800a38" class="code_img_opened" style="" onclick="cnblogs_code_hide(&#39;9a50ae25-f430-4f70-ba97-1daa6d800a38&#39;,event)" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/ExpandedBlockStart.gif" alt="">
+<div id="cnblogs_code_open_9a50ae25-f430-4f70-ba97-1daa6d800a38" class="cnblogs_code_hide" style="display: block;"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre><span style="color: #008080;"> 1</span> <span style="color: #0000ff;">class</span><span style="color: #000000;"> Program
+</span><span style="color: #008080;"> 2</span> <span style="color: #000000;">    {
+</span><span style="color: #008080;"> 3</span>         <span style="color: #0000ff;">static</span> <span style="color: #0000ff;">void</span> Main(<span style="color: #0000ff;">string</span><span style="color: #000000;">[] args)
+</span><span style="color: #008080;"> 4</span> <span style="color: #000000;">        {
+</span><span style="color: #008080;"> 5</span>             HostFactory.Run(x =&gt;
+<span style="color: #008080;"> 6</span> <span style="color: #000000;">            {
+</span><span style="color: #008080;"> 7</span>                 x.Service&lt;QuartzServer&gt;(s =&gt;
+<span style="color: #008080;"> 8</span> <span style="color: #000000;">                {
+</span><span style="color: #008080;"> 9</span>                     <span style="color: #008000;">//</span><span style="color: #008000;">3、配置一个完全定制的服务,对Topshelf没有依赖关系。常用的方式。</span>
+<span style="color: #008080;">10</span>                     s.ConstructUsing(name =&gt; <span style="color: #0000ff;">new</span><span style="color: #000000;"> QuartzServer());
+</span><span style="color: #008080;">11</span>                     <span style="color: #008000;">//</span><span style="color: #008000;">4、服务开始的事件</span>
+<span style="color: #008080;">12</span>                     s.WhenStarted(tc =&gt;<span style="color: #000000;"> tc.Start());
+</span><span style="color: #008080;">13</span>                     <span style="color: #008000;">//</span><span style="color: #008000;">5、服务停止以后事件</span>
+<span style="color: #008080;">14</span>                     s.WhenStopped(tc =&gt;<span style="color: #000000;"> tc.Stop());
+</span><span style="color: #008080;">15</span> <span style="color: #000000;">                });
+</span><span style="color: #008080;">16</span> 
+<span style="color: #008080;">17</span> <span style="color: #000000;">                x.RunAsLocalSystem();
+</span><span style="color: #008080;">18</span> 
+<span style="color: #008080;">19</span>                 x.SetDescription(<span style="color: #800000;">"</span><span style="color: #800000;">QuartzDemoDescription</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">20</span>                 x.SetDisplayName(<span style="color: #800000;">"</span><span style="color: #800000;">QuartzDemoDisplayName</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">21</span>                 x.SetServiceName(<span style="color: #800000;">"</span><span style="color: #800000;">QuartzDemoServiceName</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+</span><span style="color: #008080;">22</span> <span style="color: #000000;">            });
+</span><span style="color: #008080;">23</span> <span style="color: #000000;">        }
+</span><span style="color: #008080;">24</span>     }</pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<span class="cnblogs_code_collapse" style="display: none;">View Code</span></div>
+<p>第五步，安装windows service服务，具体见topshelf篇</p>
+<p>服务运行如下图</p>
+<p><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/703795-20160427022517158-469664318.png" alt=""></p>
+<p>&nbsp;</p>
+<h1 id="autoid-3-5-4">Quartz配置</h1>
+<h2 id="autoid-4-0-4">quartz_jobs.xml</h2>
+<h3 id="autoid-4-1-0">job 任务</h3>
+<p>其实就是1.x版本中的&lt;job-detail&gt;，这个节点是用来定义每个具体的任务的，多个任务请创建多个job节点即可</p>
+<ul>
+<li>name(必填) 任务名称，同一个group中多个job的name不能相同，若未设置group则所有未设置group的job为同一个分组，如:&lt;name&gt;sampleJob&lt;/name&gt;</li>
+<li>group(选填) 任务所属分组，用于标识任务所属分组，如:&lt;group&gt;sampleGroup&lt;/group&gt;</li>
+<li>description(选填) 任务描述，用于描述任务具体内容，如:&lt;description&gt;Sample job for Quartz Server&lt;/description&gt;</li>
+<li>job-type(必填) 任务类型，任务的具体类型及所属程序集，格式：实现了IJob接口的包含完整命名空间的类名,程序集名称，如:&lt;job-type&gt;Quartz.Server.SampleJob, Quartz.Server&lt;/job-type&gt;</li>
+<li>durable(选填) 具体作用不知，官方示例中默认为true，如:&lt;durable&gt;true&lt;/durable&gt;</li>
+<li>recover(选填) 具体作用不知，官方示例中默认为false，如:&lt;recover&gt;false&lt;/recover&gt;</li>
+</ul>
+<h3 id="autoid-4-1-1">trigger 任务触发器</h3>
+<p>用于定义使用何种方式出发任务(job)，同一个job可以定义多个trigger ，多个trigger 各自独立的执行调度，每个trigger 中必须且只能定义一种触发器类型(calendar-interval、simple、cron)</p>
+<h4 id="autoid-4-1-2">calendar-interval 一种触发器类型，使用较少，此处略过</h4>
+<h4 id="autoid-4-1-2">simple 简单任务的触发器，可以调度用于重复执行的任务</h4>
+<ul>
+<li>name(必填) 触发器名称，同一个分组中的名称必须不同</li>
+<li>group(选填) 触发器组</li>
+<li>description(选填) 触发器描述</li>
+<li>job-name(必填) 要调度的任务名称，该job-name必须和对应job节点中的name完全相同</li>
+<li>job-group(选填) 调度任务(job)所属分组，该值必须和job中的group完全相同</li>
+<li>start-time(选填) 任务开始执行时间utc时间，北京时间需要+08:00，如：&lt;start-time&gt;2012-04-01T08:00:00+08:00&lt;/start-time&gt;表示北京时间2012年4月1日上午8:00开始执行，注意服务启动或重启时都会检测此属性，若没有设置此属性或者start-time设置的时间比当前时间较早，则服务启动后会立即执行一次调度，若设置的时间比当前时间晚，服务会等到设置时间相同后才会第一次执行任务，一般若无特殊需要请不要设置此属性</li>
+<li>repeat-count(必填)&nbsp; 任务执行次数，如:&lt;repeat-count&gt;-1&lt;/repeat-count&gt;表示无限次执行，&lt;repeat-count&gt;10&lt;/repeat-count&gt;表示执行10次</li>
+<li>repeat-interval(必填) 任务触发间隔(毫秒)，如:&lt;repeat-interval&gt;10000&lt;/repeat-interval&gt; 每10秒执行一次</li>
+</ul>
+<h4 id="autoid-4-1-2">cron复杂任务触发器--使用cron表达式定制任务调度（强烈推荐)</h4>
+<ul>
+<li>name(必填) 触发器名称，同一个分组中的名称必须不同</li>
+<li>group(选填) 触发器组d</li>
+<li>escription(选填) 触发器描述</li>
+<li>job-name(必填) 要调度的任务名称，该job-name必须和对应job节点中的name完全相同</li>
+<li>job-group(选填) 调度任务(job)所属分组，该值必须和job中的group完全相同</li>
+<li>start-time(选填) 任务开始执行时间utc时间，北京时间需要+08:00，如：&lt;start-time&gt;2012-04-01T08:00:00+08:00&lt;/start-time&gt;表示北京时间2012年4月1日上午8:00开始执行，注意服务启动或重启时都会检测此属性，若没有设置此属性，服务会根据cron-expression的设置执行任务调度；若start-time设置的时间比当前时间较早，则服务启动后会忽略掉cron-expression设置，立即执行一次调度，之后再根据cron-expression执行任务调度；若设置的时间比当前时间晚，则服务会在到达设置时间相同后才会应用cron-expression，根据规则执行任务调度，一般若无特殊需要请不要设置此属性</li>
+<li>cron-expression(必填) cron表达式，如:&lt;cron-expression&gt;0/10 * * * * ?&lt;/cron-expression&gt;每10秒执行一次</li>
+</ul>
+<h2 id="autoid-4-1-2">Quartz的cron表达式</h2>
+<p>&nbsp;官方英文介绍地址：<a href="http://www.quartz-scheduler.net/documentation/quartz-2.x/tutorial/crontrigger.html">http://www.quartz-scheduler.net/documentation/quartz-2.x/tutorial/crontrigger.html</a></p>
+<p>cron expressions 整体上还是非常容易理解的，只有一点需要注意："?"号的用法，看下文可以知道“？”可以用在 day of month 和 day of week中，他主要是为了解决如下场景，如：每月的1号的每小时的31分钟，正确的表达式是：* 31 * 1 * ？，而不能是：* 31 * 1 * *，因为这样代表每周的任意一天。</p>
+<p><br>由7段构成：秒 分 时 日 月 星期 年（可选）<br>"-" ：表示范围&nbsp; MON-WED表示星期一到星期三<br>"," ：表示列举 MON,WEB表示星期一和星期三<br>"*" ：表是“每”，每月，每天，每周，每年等<br>"/" :表示增量：0/15（处于分钟段里面） 每15分钟，在0分以后开始，3/20 每20分钟，从3分钟以后开始<br>"?" :只能出现在日，星期段里面，表示不指定具体的值<br>"L" :只能出现在日，星期段里面，是Last的缩写，一个月的最后一天，一个星期的最后一天（星期六）<br>"W" :表示工作日，距离给定值最近的工作日<br>"#" :表示一个月的第几个星期几，例如："6#3"表示每个月的第三个星期五（1=SUN...6=FRI,7=SAT）</p>
+<h3 id="autoid-4-2-0">官方实例</h3>
+<p>
+</p>
+<table>
+<thead>
+<tr><th><strong>Expression</strong></th><th><strong>Meaning</strong></th></tr>
+
+</thead>
+<tbody>
+<tr>
+<td>0 0 12 * * ?</td>
+<td>每天中午12点触发</td>
+
+</tr>
+<tr>
+<td>0 15 10 ? * *</td>
+<td>每天上午10:15触发 </td>
+
+</tr>
+<tr>
+<td>0 15 10 * * ?</td>
+<td>每天上午10:15触发 </td>
+
+</tr>
+<tr>
+<td>0 15 10 * * ? *</td>
+<td>每天上午10:15触发 </td>
+
+</tr>
+<tr>
+<td>0 15 10 * * ? 2005</td>
+<td>2005年的每天上午10:15触发</td>
+
+</tr>
+<tr>
+<td>0 * 14 * * ?</td>
+<td>在每天下午2点到下午2:59期间的每1分钟触发 </td>
+
+</tr>
+<tr>
+<td>0 0/5 14 * * ?</td>
+<td>在每天下午2点到下午2:55期间的每5分钟触发</td>
+
+</tr>
+<tr>
+<td>0 0/5 14,18 * * ?</td>
+<td>在每天下午2点到2:55期间和下午6点到6:55期间的每5分钟触发</td>
+
+</tr>
+<tr>
+<td>0 0-5 14 * * ?</td>
+<td>在每天下午2点到下午2:05期间的每1分钟触发</td>
+
+</tr>
+<tr>
+<td>0 10,44 14 ? 3 WED</td>
+<td>每年三月的星期三的下午2:10和2:44触发</td>
+
+</tr>
+<tr>
+<td>0 15 10 ? * MON-FRI</td>
+<td>周一至周五的上午10:15触发</td>
+
+</tr>
+<tr>
+<td>0 15 10 15 * ?</td>
+<td>每月15日上午10:15触发</td>
+
+</tr>
+<tr>
+<td>0 15 10 L * ?</td>
+<td>每月最后一日的上午10:15触发</td>
+
+</tr>
+<tr>
+<td>0 15 10 L-2 * ?</td>
+<td>Fire at 10:15am on the 2nd-to-last last day of every month</td>
+
+</tr>
+<tr>
+<td>0 15 10 ? * 6L</td>
+<td>每月的最后一个星期五上午10:15触发</td>
+
+</tr>
+<tr>
+<td>0 15 10 ? * 6L</td>
+<td>Fire at 10:15am on the last Friday of every month</td>
+
+</tr>
+<tr>
+<td>0 15 10 ? * 6L 2002-2005</td>
+<td>2002年至2005年的每月的最后一个星期五上午10:15触发</td>
+
+</tr>
+<tr>
+<td>0 15 10 ? * 6#3</td>
+<td>每月的第三个星期五上午10:15触发</td>
+
+</tr>
+<tr>
+<td>0 0 12 1/5 * ?</td>
+<td>Fire at 12pm (noon) every 5 days every month, starting on the first day of the month.</td>
+
+</tr>
+<tr>
+<td>0 11 11 11 11 ?</td>
+<td>Fire every November 11th at 11:11am.</td>
+
+</tr>
+
+</tbody>
+</table>
+<p>&nbsp;</p>
+<p>附上demo地址</p>
+<p>https://github.com/xiaopotian1990/QuartzDemo</p>
+<p>&nbsp;</p></div><div id="MySignature"></div>
+<div class="clear"></div>
+<div id="blog_post_info_block">
+<div id="BlogPostCategory">分类: <a href="http://www.cnblogs.com/xiaopotian/category/821405.html" target="_blank">Quartz.NET</a></div>
+<div id="EntryTag"></div>
+<div id="blog_post_info"><div id="green_channel">
+        <a href="javascript:void(0);" id="green_channel_digg" onclick="DiggIt(5437364,cb_blogId,1);green_channel_success(this,&#39;谢谢推荐！&#39;);">好文要顶</a>
+            <a id="green_channel_follow" onclick="follow(&#39;46f400b4-2484-e411-b908-9dcfd8948a71&#39;);" href="javascript:void(0);">关注我</a>
+    <a id="green_channel_favorite" onclick="AddToWz(cb_entryId);return false;" href="javascript:void(0);">收藏该文</a>
+    <a id="green_channel_weibo" href="javascript:void(0);" title="分享至新浪微博" onclick="ShareToTsina()"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/icon_weibo_24.png" alt=""></a>
+    <a id="green_channel_wechat" href="javascript:void(0);" title="分享至微信" onclick="shareOnWechat()"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/wechat.png" alt=""></a>
+</div>
+<div id="author_profile">
+    <div id="author_profile_info" class="author_profile_info">
+            <a href="http://home.cnblogs.com/u/xiaopotian/" target="_blank"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/20150202154425.png" class="author_avatar" alt=""></a>
+        <div id="author_profile_detail" class="author_profile_info">
+            <a href="http://home.cnblogs.com/u/xiaopotian/">小破天</a><br>
+            <a href="http://home.cnblogs.com/u/xiaopotian/followees">关注 - 10</a><br>
+            <a href="http://home.cnblogs.com/u/xiaopotian/followers">粉丝 - 2</a>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div id="author_profile_honor"></div>
+    <div id="author_profile_follow">
+                <a href="javascript:void(0);" onclick="follow(&#39;46f400b4-2484-e411-b908-9dcfd8948a71&#39;);return false;">+加关注</a>
+    </div>
+</div>
+<div id="div_digg">
+    <div class="diggit" onclick="votePost(5437364,&#39;Digg&#39;)">
+        <span class="diggnum" id="digg_count">0</span>
+    </div>
+    <div class="buryit" onclick="votePost(5437364,&#39;Bury&#39;)">
+        <span class="burynum" id="bury_count">0</span>
+    </div>
+    <div class="clear"></div>
+    <div class="diggword" id="digg_tips">
+    </div>
+</div>
+</div>
+<div class="clear"></div>
+<div id="post_next_prev"></div>
+</div>
+
+
+		</div>
+		<p class="postfoot">
+			posted on <span id="post-date">2016-04-27 02:26</span> <a href="http://www.cnblogs.com/xiaopotian/">小破天</a> 阅读(<span id="post_view_count">72</span>) 评论(<span id="post_comment_count">0</span>) &nbsp;<a href="https://i.cnblogs.com/EditArticles.aspx?postid=5437364" rel="nofollow">编辑</a> <a href="http://www.cnblogs.com/xiaopotian/articles/5437364.html#" onclick="AddToWz(5437364);return false;">收藏</a>
+		</p>
+	</div>
+	<script type="text/javascript">var allowComments=true,cb_blogId=261271,cb_entryId=5437364,cb_blogApp=currentBlogApp,cb_blogUserGuid='46f400b4-2484-e411-b908-9dcfd8948a71',cb_entryCreatedDate='2016/4/27 2:26:00';loadViewCount(cb_entryId);</script>
+	
+	</div><a name="!comments"></a><div id="blog-comments-placeholder"></div><script type="text/javascript">var commentManager = new blogCommentManager();commentManager.renderComments(0);</script>
+<div id="comment_form" class="commentform">
+<a name="commentform"></a>
+<div id="divCommentShow"></div>
+<div id="comment_nav"><span id="span_refresh_tips"></span><a href="javascript:void(0);" onclick="return RefreshCommentList();" id="lnk_RefreshComments" runat="server" clientidmode="Static">刷新评论</a><a href="http://www.cnblogs.com/xiaopotian/articles/5437364.html#" onclick="return RefreshPage();">刷新页面</a><a href="http://www.cnblogs.com/xiaopotian/articles/5437364.html#top">返回顶部</a></div>
+<div id="comment_form_container"><div class="login_tips">注册用户登录后才能发表评论，请 <a rel="nofollow" href="javascript:void(0);" class="underline" onclick="return login(&#39;commentform&#39;);">登录</a> 或 <a rel="nofollow" href="javascript:void(0);" class="underline" onclick="return register();">注册</a>，<a href="http://www.cnblogs.com/">访问</a>网站首页。</div></div>
+<div class="ad_text_commentbox" id="ad_text_under_commentbox"></div>
+<div id="ad_t2"><a href="http://www.ucancode.com/index.htm" target="_blank">【推荐】50万行VC++源码: 大型组态工控、电力仿真CAD与GIS源码库</a><br><a href="https://group.cnblogs.com/topic/76447.html" target="_blank">【集赞】参与H3BPM 朋友圈集赞活动，豪礼任性选</a><br><a href="http://cn.udacity.com/fend/?utm_source=cnblogs&utm_medium=referral&utm_campaign=newFEND" target="_blank">【推荐】Google+GitHub联手打造前端工程师课程</a><br></div>
+<div id="opt_under_post"></div>
+<div id="ad_c1" class="c_ad_block"></div>
+<div id="under_post_news"><div class="itnews c_ad_block"><b>最新IT新闻</b>:<br> ·  <a href="http://news.cnblogs.com/n/564628/" target="_blank">Visual Studio 2017各版本安装包离线下载、安装全解析</a><br> ·  <a href="http://news.cnblogs.com/n/564627/" target="_blank">摩拜、ofo的单车大战2.0：靠烧钱无法烧出另一个“滴滴”</a><br> ·  <a href="http://news.cnblogs.com/n/564623/" target="_blank">谷歌又折腾聊天产品：Hangouts一分为二转型企业通信工具</a><br> ·  <a href="http://news.cnblogs.com/n/564626/" target="_blank">暴雪入选“最佳雇主” 成唯一上榜游戏公司</a><br> ·  <a href="http://news.cnblogs.com/n/564625/" target="_blank">微软开始在Windows 10的文件管理器内展示广告</a><br>» <a href="http://news.cnblogs.com/" title="IT新闻" target="_blank">更多新闻...</a></div></div>
+<div id="ad_c2" class="c_ad_block"><a href="http://bbs.h3bpm.com/index.php?m=app&app=product_download&a=reg&utm_source=csdn&utm_medium=pic&utm_campaign=show&utm_content=v10&utm_term=%E5%85%8D%E8%B4%B9%E4%B8%8B%E8%BD%BD" target="_blank"><img width="468" height="60" src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/24442-20170118152220281-363324784.jpg" alt=""></a></div>
+<div id="under_post_kb"><div class="itnews c_ad_block" id="kb_block"><b>最新知识库文章</b>:<br><div id="kb_recent"> ·  <a href="http://kb.cnblogs.com/page/562433/" target="_blank">垃圾回收原来是这么回事</a><br> ·  <a href="http://kb.cnblogs.com/page/554260/" target="_blank">「代码家」的学习过程和学习经验分享</a><br> ·  <a href="http://kb.cnblogs.com/page/556770/" target="_blank">写给未来的程序媛</a><br> ·  <a href="http://kb.cnblogs.com/page/558087/" target="_blank">高质量的工程代码为什么难写</a><br> ·  <a href="http://kb.cnblogs.com/page/555750/" target="_blank">循序渐进地代码重构</a><br></div>» <a href="http://kb.cnblogs.com/" target="_blank">更多知识库文章...</a></div></div>
+<div id="HistoryToday" class="c_ad_block"></div>
+<script type="text/javascript">
+    fixPostBody();
+    setTimeout(function () { incrementViewCount(cb_entryId); }, 50);
+    deliverAdT2();
+    deliverAdC1();
+    deliverAdC2();    
+    loadNewsAndKb();
+    loadBlogSignature();
+    LoadPostInfoBlock(cb_blogId, cb_entryId, cb_blogApp, cb_blogUserGuid);
+    GetPrevNextPost(cb_entryId, cb_blogId, cb_entryCreatedDate);
+    loadOptUnderPost();
+    GetHistoryToday(cb_blogId, cb_blogApp, cb_entryCreatedDate);   
+</script>
+</div>
+
+
+</div>
+</div>
+<div id="leftmenu">
+
+
+<h3>导航</h3>
+<ul>
+<li>
+<a id="blog_nav_sitehome" href="http://www.cnblogs.com/">博客园</a></li>
+<li>
+<a id="blog_nav_myhome" class="two_words" href="http://www.cnblogs.com/xiaopotian/">首页</a></li>
+<li>
+<a id="blog_nav_newpost" rel="nofollow" href="https://i.cnblogs.com/EditPosts.aspx?opt=1">新随笔</a></li>
+<li>
+<a id="blog_nav_contact" accesskey="9" class="two_words" rel="nofollow" href="https://msg.cnblogs.com/send/%E5%B0%8F%E7%A0%B4%E5%A4%A9">联系</a></li>
+<li>
+<a id="blog_nav_rss" class="two_words" href="http://www.cnblogs.com/xiaopotian/rss">订阅</a>
+<a id="blog_nav_rss_image" href="http://www.cnblogs.com/xiaopotian/rss"><img src="./quartz.net结合Topshelf实现windows service服务托管的作业调度框架 - 小破天 - 博客园_files/xml.gif" alt="订阅"></a>
+</li>
+<li>
+<a id="blog_nav_admin" class="two_words" rel="nofollow" href="https://i.cnblogs.com/">管理</a></li>
+</ul>
+
+<div id="blog-calendar" style=""><table id="blogCalendar" class="Cal" cellspacing="0" cellpadding="0" title="日历">
+	<tbody><tr><td colspan="7"><table class="CalTitle" cellspacing="0">
+		<tbody><tr><td class="CalNextPrev"><a href="javascript:void(0);" onclick="loadBlogCalendar(&#39;2017/02/01&#39;);return false;">&lt;</a></td><td align="center">2017年3月</td><td class="CalNextPrev" align="right"><a href="javascript:void(0);" onclick="loadBlogCalendar(&#39;2017/04/01&#39;);return false;">&gt;</a></td></tr>
+	</tbody></table></td></tr><tr><th class="CalDayHeader" align="center" abbr="日" scope="col">日</th><th class="CalDayHeader" align="center" abbr="一" scope="col">一</th><th class="CalDayHeader" align="center" abbr="二" scope="col">二</th><th class="CalDayHeader" align="center" abbr="三" scope="col">三</th><th class="CalDayHeader" align="center" abbr="四" scope="col">四</th><th class="CalDayHeader" align="center" abbr="五" scope="col">五</th><th class="CalDayHeader" align="center" abbr="六" scope="col">六</th></tr><tr><td class="CalOtherMonthDay" align="center">26</td><td class="CalOtherMonthDay" align="center">27</td><td class="CalOtherMonthDay" align="center">28</td><td align="center">1</td><td align="center">2</td><td align="center">3</td><td class="CalWeekendDay" align="center">4</td></tr><tr><td class="CalWeekendDay" align="center">5</td><td align="center">6</td><td align="center">7</td><td align="center">8</td><td align="center">9</td><td class="CalTodayDay" align="center">10</td><td class="CalWeekendDay" align="center">11</td></tr><tr><td class="CalWeekendDay" align="center">12</td><td align="center">13</td><td align="center">14</td><td align="center">15</td><td align="center">16</td><td align="center">17</td><td class="CalWeekendDay" align="center">18</td></tr><tr><td class="CalWeekendDay" align="center">19</td><td align="center">20</td><td align="center">21</td><td align="center">22</td><td align="center">23</td><td align="center">24</td><td class="CalWeekendDay" align="center">25</td></tr><tr><td class="CalWeekendDay" align="center">26</td><td align="center">27</td><td align="center">28</td><td align="center">29</td><td align="center">30</td><td align="center">31</td><td class="CalOtherMonthDay" align="center">1</td></tr><tr><td class="CalOtherMonthDay" align="center">2</td><td class="CalOtherMonthDay" align="center">3</td><td class="CalOtherMonthDay" align="center">4</td><td class="CalOtherMonthDay" align="center">5</td><td class="CalOtherMonthDay" align="center">6</td><td class="CalOtherMonthDay" align="center">7</td><td class="CalOtherMonthDay" align="center">8</td></tr>
+</tbody></table></div><script type="text/javascript">loadBlogDefaultCalendar();</script>
+<meta name="vs_showGrid" content="False">
+
+<h3>公告</h3>
+<div id="blog-news"><div id="profile_block">昵称：<a href="http://home.cnblogs.com/u/xiaopotian/">小破天</a><br>园龄：<a href="http://home.cnblogs.com/u/xiaopotian/" title="入园时间：2014-12-15">2年2个月</a><br>粉丝：<a href="http://home.cnblogs.com/u/xiaopotian/followers/">2</a><br>关注：<a href="http://home.cnblogs.com/u/xiaopotian/followees/">10</a><div id="p_b_follow"><a href="javascript:void(0);" onclick="follow(&#39;46f400b4-2484-e411-b908-9dcfd8948a71&#39;)">+加关注</a></div></div></div><script type="text/javascript">loadBlogNews();</script>
+
+<div id="blog-sidecolumn"><div id="sidebar_search" class="sidebar-block">
+<div id="sidebar_search" class="mySearch">
+<h3 class="catListTitle">搜索</h3>
+<div id="sidebar_search_box">
+<div id="widget_my_zzk" class="div_my_zzk"><input type="text" id="q" onkeydown="return zzk_go_enter(event);" class="input_my_zzk">&nbsp;<input onclick="zzk_go()" type="button" value="找找看" id="btnZzk" class="btn_my_zzk"></div>
+<div id="widget_my_google" class="div_my_zzk"><input type="text" name="google_q" id="google_q" onkeydown="return google_go_enter(event)" class="input_my_zzk">&nbsp;<input onclick="google_go()" type="button" value="谷歌搜索" class="btn_my_zzk"></div>
+</div>
+</div>
+
+</div><div id="sidebar_shortcut" class="sidebar-block">
+<h3 class="catListTitle">常用链接</h3>
+<ul>
+<li><a href="http://www.cnblogs.com/xiaopotian/p/" title="我的博客的随笔列表">我的随笔</a></li><li><a href="http://www.cnblogs.com/xiaopotian/MyComments.html" title="我发表过的评论列表">我的评论</a></li><li><a href="http://www.cnblogs.com/xiaopotian/OtherPosts.html" title="我评论过的随笔列表">我的参与</a></li><li><a href="http://www.cnblogs.com/xiaopotian/RecentComments.html" title="我的博客的评论列表">最新评论</a></li><li><a href="http://www.cnblogs.com/xiaopotian/tag/" title="我的博客的标签列表">我的标签</a></li>
+</ul>
+<div id="itemListLin_con" style="display:none;">
+
+</div></div><div id="sidebar_toptags" class="sidebar-block"></div><div id="sidebar_categories">
+		<h3>文章分类</h3>
+		
+				<ul>
+			
+				<li><a id="CatList_LinkList_0_Link_0" href="http://www.cnblogs.com/xiaopotian/category/903657.html">ClickOnce(1)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_1" href="http://www.cnblogs.com/xiaopotian/category/774952.html">CLR VIA C#读后感(1)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_2" href="http://www.cnblogs.com/xiaopotian/category/865325.html">MongoDB(1)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_3" href="http://www.cnblogs.com/xiaopotian/category/821405.html">Quartz.NET(1)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_4" href="http://www.cnblogs.com/xiaopotian/category/817925.html">sql(5)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_5" href="http://www.cnblogs.com/xiaopotian/category/831317.html">sqlserver(2)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_6" href="http://www.cnblogs.com/xiaopotian/category/820250.html">Topshelf(1)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_7" href="http://www.cnblogs.com/xiaopotian/category/861547.html">错误相关(1)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_8" href="http://www.cnblogs.com/xiaopotian/category/945975.html">服务器相关(1)</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_9" href="http://www.cnblogs.com/xiaopotian/category/892215.html">异步多线程</a></li>
+			
+				<li><a id="CatList_LinkList_0_Link_10" href="http://www.cnblogs.com/xiaopotian/category/773371.html">异常处理(4)</a></li>
+			
+				</ul>
+			
+	</div><div id="sidebar_recentcomments" class="sidebar-block"><div id="recent_comments_wrap" style="display: none;">
+<h3 class="catListTitle">最新评论</h3>
+<div class="RecentComment" id="RecentComments">
+	<div id="RecentCommentsBlock"></div>
+</div>
+</div></div><div id="sidebar_topviewedposts" class="sidebar-block"><div id="topview_posts_wrap" style="display: none;">
+<h3 class="catListTitle">阅读排行榜</h3>
+<div class="RecentComment" id="TopViewPosts"> 
+	<div id="TopViewPostsBlock"></div>
+</div>
+</div></div><div id="sidebar_topcommentedposts" class="sidebar-block"><div id="topfeedback_posts_wrap" style="display: none;">
+<h3 class="catListTitle">评论排行榜</h3>
+<div class="RecentComment" id="TopCommentsPosts">
+	<div id="TopFeedbackPostsBlock"></div>
+</div></div></div><div id="sidebar_topdiggedposts" class="sidebar-block"><div id="topdigg_posts_wrap" style="display: none;">
+<h3 class="catListTitle">推荐排行榜</h3>
+<div class="RecentComment">
+	<div id="TopDiggPostsBlock"></div>
+</div></div></div></div><script type="text/javascript">loadBlogSideColumn();</script>
+
+</div>
+</div>
+<div class="clear"></div>
+<div id="footer">
+
+<p id="footer">
+	Powered by: 
+	<br>
+	
+	<a id="Footer1_Hyperlink3" name="Hyperlink1" href="http://www.cnblogs.com/" style="font-family:Verdana;font-size:12px;">博客园</a>
+	<br>
+	Copyright © 小破天
+</p>
+</div>
+</div>
+
+
+
+</body></html>
